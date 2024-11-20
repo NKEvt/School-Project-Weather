@@ -2,6 +2,7 @@ import requests
 import csv
 from datetime import datetime, timedelta
 import os
+#hi
 
 # Function to collect weather data via API (Mode 1: Data Collection)
 def collect_weather_data(api_url, api_key, start_date, end_date):
