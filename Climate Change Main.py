@@ -1,19 +1,18 @@
 import requests
 import csv
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 
-
-# Function to collect weather data via API (Mode 1: Data Collection)
-def collect_weather_data(api_url, api_key, start_date, end_date):
+# Function to collect weather data via OpenWeatherMap API (Mode 1: Data Collection)
+def collect_weather_data(api_url, api_key, start_date, end_date, zip_code):
     headers = {'Content-Type': 'application/json'}
-    params = {'key': api_key, 'start': start_date, 'end': end_date}
+    params = {'appid': api_key, 'zip': zip_code, 'units': 'metric'}  # 'metric' to get temperature in Celsius
     
     # Make request to the API
     response = requests.get(api_url, params=params, headers=headers)
     if response.status_code == 200:
         data = response.json()
-        
+
         # Extract the year from the start_date to create a file name
         year = start_date.split('-')[0]
         
@@ -22,10 +21,20 @@ def collect_weather_data(api_url, api_key, start_date, end_date):
         with open(filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['Date', 'Time', 'Temperature (F)'])
-            for entry in data['data']:
-                date_time = entry['datetime']
-                temp = (entry['temp'] * 9/5) + 32  # Convert from °C to °F
-                writer.writerow([date_time.split('T')[0], date_time.split('T')[1], temp])
+
+            # Assuming that OpenWeatherMap returns the data we need, here's an example of how to handle it
+            # For current weather, we'll just collect the temperature for the specified date
+            date_time = data['dt']  # Date-time from OpenWeatherMap response
+            temp_celsius = data['main']['temp']
+            temp_fahrenheit = (temp_celsius * 9/5) + 32  # Convert from Celsius to Fahrenheit
+
+            # Convert timestamp to datetime object and format it
+            datetime_object = datetime.utcfromtimestamp(date_time)
+            date_str = datetime_object.strftime('%Y-%m-%d')
+            time_str = datetime_object.strftime('%H:%M')
+
+            writer.writerow([date_str, time_str, temp_fahrenheit])
+            
         print(f"Data collected and stored in {filename}")
     else:
         print("Error in API request:", response.status_code)
@@ -80,12 +89,15 @@ def calculate_K(file_list):
     print(f"K values calculated and stored in {output_filename}")
 
 # Example of running Mode 1: Collect data from Jan 1st 2010 till Sep 6th 2024
-api_url = 'https://api.weatherbit.io/v2.0/history/daily'
-api_key = 'your_api_key'
+api_url = 'https://api.openweathermap.org/data/2.5/weather'  # OpenWeatherMap current weather endpoint
+api_key = '4f70f224cd3a0d3c49caeb8f502637f8'  # Your OpenWeatherMap API key
+zip_code = '07302'  # Example zip code (you can adjust this as needed)
+
+# Start date and end date (just used to decide the file name)
 start_date = '2010-01-01'
 end_date = '2024-09-06'
 
-collect_weather_data(api_url, api_key, start_date, end_date)
+collect_weather_data(api_url, api_key, start_date, end_date, zip_code)
 
 # Example of running Mode 2: Calculate K
 file_list = ['2019-temp.csv', '2020-temp.csv', '2021-temp.csv', '2022-temp.csv']
@@ -97,13 +109,17 @@ def predict_temperature(date, real_temp, year, K_file):
     
     # Load K values from file
     K_values = {}
-    with open(K_file, 'r') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)  # Skip header row
-        for row in reader:
-            yr, mnth, K = row
-            if yr == str(year):
-                K_values[mnth] = float(K)
+    if os.path.exists(K_file):
+        with open(K_file, 'r') as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader)  # Skip header row
+            for row in reader:
+                yr, mnth, K = row
+                if yr == str(year):
+                    K_values[mnth] = float(K)
+    else:
+        print(f"Error: The K file '{K_file}' does not exist.")
+        return None
     
     # If K for this year is not available, use previous year’s K
     if month not in K_values:
@@ -125,7 +141,7 @@ def predict_temperature(date, real_temp, year, K_file):
         print(f"No K value available for {month}")
         return None
 
-# Mode 1: Interactive Mode
+# Run interactive mode (you can adapt this to your needs)
 def interactive_mode():
     date = input("Enter date (YYYY-MM-DD): ")
     time = input("Enter time (HH:MM): ")
@@ -137,22 +153,5 @@ def interactive_mode():
         print(f"Predicted temperature: {predicted_temp:.2f} °F")
         print(f"Deviation: {real_temp - predicted_temp:.2f} °F")
 
-# Mode 2: Predict Mode (using K for 2024)
-def predict_mode():
-    date = input("Enter date (YYYY-MM-DD): ")
-    time = input("Enter time (HH:MM): ")
-    real_temp = float(input("Enter real temperature in Fahrenheit: "))
-    
-    predicted_temp = predict_temperature(date, real_temp, 2024, 'year-coeff.csv')
-    
-    if predicted_temp:
-        print(f"Predicted temperature for {date}: {predicted_temp:.2f} °F")
-        print(f"Real temperature: {real_temp:.2f} °F")
-        print(f"Deviation: {real_temp - predicted_temp:.2f} °F")
-
-# Run the interactive mode
+# Example: Running interactive mode
 interactive_mode()
-
-# Run the predict mode for 2024
-predict_mode()
-
