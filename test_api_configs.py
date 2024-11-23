@@ -29,3 +29,6 @@ def get_weather_data(zip_code):
     else:
         print("Invalid API choice!")
         return None
+
+zip_code='07302';
+get_weather_data(zip_code);
