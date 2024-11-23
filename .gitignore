@@ -1,0 +1,14 @@
+# Ignore all CSV files
+*.csv
+
+# Ignore virtual environment directories
+env/
+venv/
+
+# Ignore IDE/editor configuration files
+.vscode/
+.idea/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
