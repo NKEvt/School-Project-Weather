@@ -55,8 +55,9 @@ def collect_historical_weather_data(api_url, api_key, year, times_of_day):
     print(f"Data for {year} collected and stored in {filename}")
 
 # Example of running Mode 1: Collect historical data for 2021 with times 04:00, 10:00, 16:00, and 22:00
-api_url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine'
-api_key = '4f70f224cd3a0d3c49caeb8f502637f8'  # Your OpenWeatherMap API key
+# api_url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine'
+# api_key = 'XXX'  # Your OpenWeatherMap API key
+# use config.py for api key and url
 year = 2021
 times_of_day = ['04:00', '10:00', '16:00', '22:00']
 

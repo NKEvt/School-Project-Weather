@@ -3,6 +3,7 @@ import csv
 from datetime import datetime
 import os
 
+
 # Function to collect weather data via OpenWeatherMap API (Mode 1: Data Collection)
 def collect_weather_data(api_url, api_key, start_date, end_date, zip_code):
     headers = {'Content-Type': 'application/json'}
@@ -89,8 +90,10 @@ def calculate_K(file_list):
     print(f"K values calculated and stored in {output_filename}")
 
 # Example of running Mode 1: Collect data from Jan 1st 2010 till Sep 6th 2024
-api_url = 'https://api.openweathermap.org/data/2.5/weather'  # OpenWeatherMap current weather endpoint
-api_key = '4f70f224cd3a0d3c49caeb8f502637f8'  # Your OpenWeatherMap API key
+# api_url = 'https://api.openweathermap.org/data/2.5/weather'  # OpenWeatherMap current weather endpoint
+# api_key = 'XXX'  # Your OpenWeatherMap API key
+# Use config.py for api_key and url
+# 
 zip_code = '07302'  # Example zip code (you can adjust this as needed)
 
 # Start date and end date (just used to decide the file name)
@@ -152,6 +155,21 @@ def interactive_mode():
     if predicted_temp:
         print(f"Predicted temperature: {predicted_temp:.2f} °F")
         print(f"Deviation: {real_temp - predicted_temp:.2f} °F")
+
+from weather_api import get_weather_data
+
+def main():
+    zip_code = "07302"  # Replace with your target zip code
+    weather_data = get_weather_data(zip_code)
+    
+    if weather_data:
+        print(json.dumps(weather_data, indent=4))
+    else:
+        print("Could not fetch weather data.")
+
+if __name__ == "__main__":
+    main()
+
 
 # Example: Running interactive mode
 interactive_mode()
