@@ -5,6 +5,9 @@
 env/
 venv/
 
+# Ignore python bytecode
+__pycache__/
+
 # Ignore IDE/editor configuration files
 .vscode/
 .idea/
@@ -12,3 +15,4 @@ venv/
 # Ignore OS-specific files
 .DS_Store
 Thumbs.db
+
