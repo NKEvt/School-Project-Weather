@@ -12,28 +12,33 @@ def forecast_next_days(file_name="data/output-20000101-20241123.csv", days=10):
     :param days: Number of days to forecast.
     :return: DataFrame with forecasted temperatures for the next 'days'.
     """
-    # Load the historical temperature data
     try:
-        data = pd.read_csv(file_name, skiprows=8)  # Skip comment lines
+        data = pd.read_csv(file_name, skiprows=8, skip_blank_lines=False)
     except FileNotFoundError:
         print(f"Error: File '{file_name}' not found!")
         return None
 
-    data.columns = data.columns.str.strip()
+    # Extract the daily data table
+    daily_data_end_idx = data[data.iloc[:, 0].str.startswith("# Avg Yearly temperature", na=False)].index[0]
+    daily_data = data.iloc[:daily_data_end_idx, :4]
+    daily_data.columns = ["Date", "T", "T_10_DAYS_AVG", "K_D_10_DAYS"]
+    daily_data = daily_data.dropna(subset=["Date"])
 
-    # Extract Yearly Average Temperatures
-    yearly_data = data.iloc[:, 1:]  # Focus on the yearly data table
+    # Parse 'Date' column
+    daily_data['Date'] = pd.to_datetime(daily_data['Date'], format='%Y-%m-%d')
+
+    # Extract the yearly data table
+    yearly_data_start_idx = daily_data_end_idx + 2
+    yearly_data = data.iloc[yearly_data_start_idx:, :3]
     yearly_data.columns = ["Year", "T_Y_AVG", "K_Y_AVG"]
-    yearly_data = yearly_data.dropna(subset=["Year", "T_Y_AVG"])  # Remove invalid rows
+    yearly_data = yearly_data.dropna(subset=["Year", "T_Y_AVG"])
     yearly_data["Year"] = pd.to_numeric(yearly_data["Year"], errors="coerce")
     yearly_data["T_Y_AVG"] = pd.to_numeric(yearly_data["T_Y_AVG"], errors="coerce")
-    yearly_data = yearly_data.dropna()  # Drop rows with parsing issues
+    yearly_data = yearly_data.dropna()
 
     # Prepare data for regression
-    X = yearly_data["Year"].values.reshape(-1, 1)  # Features (Years)
-    y = yearly_data["T_Y_AVG"].values  # Target (Average Temperatures)
-
-    # Train a linear regression model
+    X = yearly_data["Year"].values.reshape(-1, 1)
+    y = yearly_data["T_Y_AVG"].values
     model = LinearRegression()
     model.fit(X, y)
 
@@ -41,27 +46,28 @@ def forecast_next_days(file_name="data/output-20000101-20241123.csv", days=10):
     slope = model.coef_[0]
     intercept = model.intercept_
 
-    # Find the last available date in the dataset
-    daily_data = data.iloc[:, :4]  # Focus on the daily data table
-    daily_data.columns = ["Date", "T", "T_10_DAYS_AVG", "K_D_10_DAYS"]
-    daily_data = daily_data.dropna(subset=["Date"])  # Ensure 'Date' column has valid data
+    # Find the last available date
+    last_date_dt = daily_data['Date'].max()
 
-    # Correctly parse the last date as YYYYMMDD
-    try:
-        last_date_str = str(int(daily_data["Date"].iloc[-1]))
-        last_date_dt = datetime.strptime(last_date_str, "%Y%m%d")
-    except ValueError:
-        print("Error: Last date in the 'Date' column is not in YYYYMMDD format!")
-        return None
+    # Historical daily variation by day of year
+    daily_data["DayOfYear"] = daily_data["Date"].dt.dayofyear
+    daily_variation = daily_data.groupby("DayOfYear")["T"].mean()
 
     # Forecast the next 'days' days
-    forecast_dates = [(last_date_dt + timedelta(days=i)).strftime("%Y%m%d") for i in range(1, days + 1)]
-    forecast_years = [datetime.strptime(date, "%Y%m%d").year for date in forecast_dates]
-    forecast_temperatures = [slope * year + intercept for year in forecast_years]
+    forecast_dates = [(last_date_dt + timedelta(days=i)) for i in range(1, days + 1)]
+    forecast_years = [date.year for date in forecast_dates]
+    forecast_doy = [date.timetuple().tm_yday for date in forecast_dates]
+    forecast_yearly_avg = [slope * year + intercept for year in forecast_years]
+
+    # Incorporate daily variations
+    forecast_temperatures = [
+        forecast_yearly_avg[i] + daily_variation.get(doy, 0)
+        for i, doy in enumerate(forecast_doy)
+    ]
 
     # Create DataFrame for forecast
     forecast_df = pd.DataFrame({
-        "Date": forecast_dates,
+        "Date": [date.strftime("%Y-%m-%d") for date in forecast_dates],
         "Predicted Temperature (°C)": forecast_temperatures
     })
 
@@ -85,5 +91,3 @@ if __name__ == "__main__":
         print(forecast)
         forecast.to_csv("forecast_output.csv", index=False)
         print("\nForecast saved to 'forecast_output.csv'.")
-
-# python forecast_next_10_days.py --file data/output-20000101-20241123.csv --days 10
