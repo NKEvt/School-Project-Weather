@@ -1,10 +1,6 @@
 import os
-
-# wheather API configuration
-# the file configures three following API
-
-
-
+# Wheather APIs configuration
+# API key must be kept in OS environment vars
 ################################
 # WEATHER_CROSSING_API
 # API sample call 01/01/2010 - 11/20/2024 : 
