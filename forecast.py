@@ -98,5 +98,5 @@ if __name__ == "__main__":
     if forecast is not None:
         print("\nForecast for the next days:")
         print(forecast)
-        forecast.to_csv("forecast_output.csv", index=False)
+        forecast.to_csv("data/forecast_output.csv", index=False)
         print("\nForecast saved to 'forecast_output.csv'.")
