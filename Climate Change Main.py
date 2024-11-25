@@ -89,6 +89,28 @@ def write_to_csv(daily_data, yearly_averages, yearly_coefficients, output_file):
             k_y_avg = yearly_coefficients.get(year, "")
             writer.writerow([year, t_y_avg, k_y_avg])
 
+def calculate_t_10_days_avg_and_k_d(daily_temps):
+    """
+    Calculate T_10_DAYS_AVG and K_D_10_DAYS such that
+    T = T_10_DAYS_AVG * K_D_10_DAYS.
+    """
+    t_10_days_avg = []
+    k_d_10_days = []
+    
+    for i in range(len(daily_temps)):
+        if i < 10:
+            # Not enough data for 10-day moving average
+            t_10_days_avg.append(None)
+            k_d_10_days.append(None)
+        else:
+            # Calculate the 10-day moving average
+            avg = sum(daily_temps[i - 10:i]) / 10
+            t_10_days_avg.append(avg)
+            
+            # Calculate K_D_10_DAYS to satisfy T = T_10_DAYS_AVG * K_D_10_DAYS
+            k_d_10_days.append(daily_temps[i] / avg if avg != 0 else None)
+    
+    return t_10_days_avg, k_d_10_days
 
 def main():
     # Define constants
@@ -97,7 +119,6 @@ def main():
     start_date = "2000-01-01"
     end_date = "2024-11-23"
     output_file = f"data/output-{start_date.replace('-', '')}-{end_date.replace('-', '')}.csv"
-
 
     # Step 1: Fetch data
     print("Fetching weather data...")
@@ -125,10 +146,9 @@ def main():
     sorted_dates = sorted(daily_avg_temps.keys())
     daily_temps_list = [daily_avg_temps[date] for date in sorted_dates]
 
-    # Step 3: Compute moving averages and coefficients
+    # Step 3: Compute T_10_DAYS_AVG and K_D_10_DAYS
     print("Calculating daily moving averages and coefficients...")
-    t_10_days_avg_list = calculate_moving_average(daily_temps_list, 10)
-    k_d_10_days_list = calculate_coefficients(daily_temps_list, t_10_days_avg_list)
+    t_10_days_avg_list, k_d_10_days_list = calculate_t_10_days_avg_and_k_d(daily_temps_list)
 
     # Update daily_avg_temps with calculated values
     for i, date in enumerate(sorted_dates):
