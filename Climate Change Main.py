@@ -1,11 +1,13 @@
 import requests
 import csv
-from datetime import datetime, timedelta
+from datetime import datetime
 import config
 
 
 def fetch_openmeteo_weather_data(latitude, longitude, start_date, end_date):
-    """Fetch weather data from Open-Meteo API."""
+    """
+    Fetch weather data from Open-Meteo API.
+    """
     try:
         base_url = config.OPEN_METEO_API_TMPL.format(
             lat=latitude, long=longitude, start_dt=start_date, end_dt=end_date
@@ -20,7 +22,9 @@ def fetch_openmeteo_weather_data(latitude, longitude, start_date, end_date):
 
 
 def calculate_moving_average(temperatures, window_size):
-    """Calculate moving averages with a given window size."""
+    """
+    Calculate moving averages with a given window size.
+    """
     moving_averages = []
     for i in range(len(temperatures)):
         if i < window_size - 1:
@@ -32,18 +36,22 @@ def calculate_moving_average(temperatures, window_size):
 
 
 def calculate_coefficients(daily_temps, moving_averages):
-    """Calculate daily temperature coefficients."""
+    """
+    Calculate daily temperature coefficients.
+    """
     coefficients = []
     for i in range(len(daily_temps)):
         if i == 0 or moving_averages[i] is None:
             coefficients.append(None)
         else:
-            coefficients.append(daily_temps[i - 1] / moving_averages[i])
+            coefficients.append(daily_temps[i] / moving_averages[i])
     return coefficients
 
 
 def calculate_yearly_averages(daily_data):
-    """Calculate average temperature for each year."""
+    """
+    Calculate average temperature for each year.
+    """
     yearly_data = {}
     for date_str, temp in daily_data.items():
         year = date_str[:4]
@@ -57,7 +65,9 @@ def calculate_yearly_averages(daily_data):
 
 
 def calculate_yearly_coefficients(yearly_averages):
-    """Calculate yearly temperature coefficients."""
+    """
+    Calculate yearly temperature coefficients.
+    """
     years = sorted(yearly_averages.keys())
     yearly_coefficients = {}
     for i in range(1, len(years)):
@@ -73,15 +83,21 @@ def calculate_yearly_coefficients(yearly_averages):
 
 
 def write_to_csv(daily_data, yearly_averages, yearly_coefficients, output_file):
-    """Write processed data to CSV."""
+    """
+    Write processed data to CSV.
+    """
     with open(output_file, mode='w', newline='') as file:
         writer = csv.writer(file)
+
+        # Write the daily data
         writer.writerow(["# Daily temperature and moving averages"])
         writer.writerow(["Date (YYYYMMDD)", "T (°C)", "T_10_DAYS_AVG (°C)", "K_D_10_DAYS"])
         for date_str, data in daily_data.items():
-            t_10_days_avg = data['T_10_DAYS_AVG']
-            k_d_10_days = data['K_D_10_DAYS']
+            t_10_days_avg = data.get('T_10_DAYS_AVG')
+            k_d_10_days = data.get('K_D_10_DAYS')
             writer.writerow([date_str, data['T'], t_10_days_avg, k_d_10_days])
+
+        # Write the yearly data
         writer.writerow([])
         writer.writerow(["# Avg Yearly temperature"])
         writer.writerow(["Year", "T_Y_AVG (°C)", "K_Y_AVG"])
@@ -89,28 +105,6 @@ def write_to_csv(daily_data, yearly_averages, yearly_coefficients, output_file):
             k_y_avg = yearly_coefficients.get(year, "")
             writer.writerow([year, t_y_avg, k_y_avg])
 
-def calculate_t_10_days_avg_and_k_d(daily_temps):
-    """
-    Calculate T_10_DAYS_AVG and K_D_10_DAYS such that
-    T = T_10_DAYS_AVG * K_D_10_DAYS.
-    """
-    t_10_days_avg = []
-    k_d_10_days = []
-    
-    for i in range(len(daily_temps)):
-        if i < 10:
-            # Not enough data for 10-day moving average
-            t_10_days_avg.append(None)
-            k_d_10_days.append(None)
-        else:
-            # Calculate the 10-day moving average
-            avg = sum(daily_temps[i - 10:i]) / 10
-            t_10_days_avg.append(avg)
-            
-            # Calculate K_D_10_DAYS to satisfy T = T_10_DAYS_AVG * K_D_10_DAYS
-            k_d_10_days.append(daily_temps[i] / avg if avg != 0 else None)
-    
-    return t_10_days_avg, k_d_10_days
 
 def main():
     # Define constants
@@ -148,7 +142,8 @@ def main():
 
     # Step 3: Compute T_10_DAYS_AVG and K_D_10_DAYS
     print("Calculating daily moving averages and coefficients...")
-    t_10_days_avg_list, k_d_10_days_list = calculate_t_10_days_avg_and_k_d(daily_temps_list)
+    t_10_days_avg_list = calculate_moving_average(daily_temps_list, 10)
+    k_d_10_days_list = calculate_coefficients(daily_temps_list, t_10_days_avg_list)
 
     # Update daily_avg_temps with calculated values
     for i, date in enumerate(sorted_dates):
