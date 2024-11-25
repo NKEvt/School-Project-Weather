@@ -26,6 +26,7 @@ def fetch_visualcrossing_weather_data(location, start_date, end_date):
         return None
 
 # Function to write weather data to CSV file
+
 def write_to_csv(file_name, data):
     try:
         with open(file_name, mode='w', newline='') as file:
@@ -53,11 +54,12 @@ def test_visualcrossing_api():
     data = fetch_visualcrossing_weather_data(location, start_date_str, end_date_str)
     if data:
         # Write data to CSV if fetch was successful
-        write_to_csv("visualcrossing_weather.csv", data)
+        write_visualcrossing_to_csv("visualcrossing_weather.csv", data)
         print("VisualCrossing: Data successfully written to CSV.")
     else:
         print("VisualCrossing: Failed to fetch data.")
 
+###############################################################
 # Function to fetch historical weather data from Open-Meteo API
 def fetch_openmeteo_weather_data(latitude, longitude, start_date, end_date):
     try:
@@ -77,22 +79,23 @@ def fetch_openmeteo_weather_data(latitude, longitude, start_date, end_date):
         print(f"Error fetching data from Open-Meteo API: {e}")
         return None
 
-
+###################################################
 # Function to write weather data to CSV file
-def write_to_csv(file_name, data):
+def write_visualcrossing_to_csv(start_date, end_date, csv_data):
+    file_name = f"data/vc-{start_date}-{end_date}.csv"
     try:
         with open(file_name, mode='w', newline='') as file:
             writer = csv.writer(file)
             # Header row for the CSV file
             writer.writerow(["Date", "Temperature (C)", "Conditions"])
-            # Iterate through the days and write data
-            for day in data['days']:
-                writer.writerow([day['datetime'], day['temp'], day['conditions']])
+            # Iterate through the days and write csv_data
+            for day in csv_data['days']:
+                writer.writerow([csv_data['datetime'], csv_data['temp'], csv_data['conditions']])
     except Exception as e:
         print(f"Error writing data to CSV file: {e}")
 
+#########################################
 # Function to test VisualCrossing API
-
 def test_visualcrossing_api():
     location = "Newark,NJ"
     end_date = datetime.datetime.now()
@@ -102,11 +105,12 @@ def test_visualcrossing_api():
 
     data = fetch_visualcrossing_weather_data(location, start_date_str, end_date_str)
     if data:
-        write_to_csv("visualcrossing_weather.csv", data)
+        write_visualcrossing_to_csv("visualcrossing_weather.csv", data)
         print("VisualCrossing: Data successfully written to CSV.")
     else:
         print("VisualCrossing: Failed to fetch data.")
 
+###############################################################
 # Function to fetch historical weather data from Open-Meteo API
 def fetch_openmeteo_weather_data(latitude, longitude, start_date, end_date):
     try:
@@ -130,9 +134,11 @@ def fetch_openmeteo_weather_data(latitude, longitude, start_date, end_date):
         print(f"Error fetching data from Open-Meteo API: {e}")
         return None
 
+
+#####################################################
 # Function to write Open-Meteo data to CSV
 def write_openmeteo_to_csv(start_date, end_date, csv_data):
-    file_name = f"om-{start_date}-{end_date}.csv"
+    file_name = f"data/om-{start_date}-{end_date}.csv"
     try:
         with open(file_name, mode='w', newline='') as file:
             writer = csv.writer(file)
@@ -147,6 +153,7 @@ def write_openmeteo_to_csv(start_date, end_date, csv_data):
     except Exception as e:
         print(f"Error writing Open-Meteo csv_data to CSV file: {e}")
 
+##################################################
 # Function to test Open-Meteo API
 def test_openmeteo_api(start_dt, end_dt):
     latitude = 40.7282  # Jersey City, NJ

@@ -20,7 +20,7 @@ VISUALCROSSING_API_KEY = os.getenv('VISUALCROSSING_API_KEY')
 # https://archive-api.open-meteo.com/v1/era5?latitude=40.7282&longitude=-74.0776&start_date=2010-01-01&end_date=2024-11-22&hourly=temperature_2m
 
 # API URL template
-OPEN_METEO_API_TMPL = "https://archive-api.open-meteo.com/v1/era5?latitude={lat}&longitude={long}&start_date={start_dt}&end_date={end_date}&hourly=temperature_2m"
+OPEN_METEO_API_TMPL = "https://archive-api.open-meteo.com/v1/era5?latitude={lat}&longitude={long}&start_date={start_dt}&end_date={end_dt}&hourly=temperature_2m"
 
 
 
