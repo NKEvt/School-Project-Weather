@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 # Load data
-data = pd.read_csv('output-20000101-20241123.csv')
+data = pd.read_csv('data/output-20000101-20241123.csv')
 data['Date'] = pd.to_datetime(data['Date'])
 data.set_index('Date', inplace=True)
 
