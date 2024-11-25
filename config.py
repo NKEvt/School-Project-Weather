@@ -7,7 +7,7 @@ import os
 # https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/07302/2010-01-01/2024-11-20?unitGroup=us&include=hours%2Cdays&key=KEY&contentType=json
 # https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/40.7282%2C-74.0776/2010-01-01/2024-11-20?unitGroup=metric&include=hours%2Cdays&key=H6UBQWH74ZE49PVNUE8KXXCPN&contentType=json
 # API URL template
-WEATHER_CROSSING_API_TMPL = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{zip}/{start_dt}/{end_dt}?unitGroup={type}&include=hours,days&key={API_key}&contentType=json"
+VISUALCROSSING_API_TMPL = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{zip}/{start_dt}/{end_dt}?unitGroup={type}&include=hours,days&key={API_key}&contentType=json"
 # Possible values:
 # type : us, metric
 # Store API keys (You can set these as environment variables as well)
