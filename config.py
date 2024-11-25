@@ -11,7 +11,7 @@ WEATHER_CROSSING_API_TMPL = "https://weather.visualcrossing.com/VisualCrossingWe
 # Possible values:
 # type : us, metric
 # Store API keys (You can set these as environment variables as well)
-WEATHER_CROSSING_API_KEY = os.getenv('WEATHER_CROSSING_API_KEY')
+VISUALCROSSING_API_KEY = os.getenv('VISUALCROSSING_API_KEY')
 
 ################################
 # OPEN_METEO_API
