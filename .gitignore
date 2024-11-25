@@ -1,6 +1,3 @@
-# Ignore all CSV files
-*.csv
-
 # Ignore virtual environment directories
 env/
 venv/
