@@ -18,14 +18,23 @@ def forecast_next_days(file_name="data/output-20000101-20241123.csv", days=10):
         print(f"Error: File '{file_name}' not found!")
         return None
 
-    # Extract the daily data table
+    # Extract the daily data table (first table)
     daily_data_end_idx = data[data.iloc[:, 0].str.startswith("# Avg Yearly temperature", na=False)].index[0]
     daily_data = data.iloc[:daily_data_end_idx, :4]
     daily_data.columns = ["Date", "T", "T_10_DAYS_AVG", "K_D_10_DAYS"]
-    daily_data = daily_data.dropna(subset=["Date"])
+    daily_data = daily_data.dropna(subset=["Date", "T"])  # Drop rows without a Date or Temperature
 
-    # Parse 'Date' column
-    daily_data['Date'] = pd.to_datetime(daily_data['Date'], format='%Y-%m-%d')
+    # Convert 'T' column to numeric, coercing errors
+    daily_data["T"] = pd.to_numeric(daily_data["T"], errors="coerce")
+    daily_data = daily_data.dropna(subset=["T"])  # Remove rows where 'T' could not be converted
+
+    # Parse 'Date' column in the daily data table
+    try:
+        daily_data['Date'] = pd.to_datetime(daily_data['Date'], format='%Y-%m-%d')
+    except ValueError:
+        print("Error: 'Date' column is not in 'YYYY-MM-DD' format and couldn't be parsed!")
+        return None
+
 
     # Extract the yearly data table
     yearly_data_start_idx = daily_data_end_idx + 2
