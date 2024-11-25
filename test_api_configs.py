@@ -7,18 +7,76 @@ import config  # Importing configurations for API URLs, keys, etc.
 # Function to fetch historical weather data from VisualCrossing API
 def fetch_visualcrossing_weather_data(location, start_date, end_date):
     try:
+        # Get the API key from the config file
         api_key = config.VISUALCROSSING_API_KEY
-        base_url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline"
-        url = f"{base_url}/{location}/{start_date}/{end_date}?key={api_key}&unitGroup=metric"
-
-        response = requests.get(url)
+        # Base URL for the VisualCrossing API from config file
+        base_url = config.VISUALCROSSING_API_TMPL.format(zip=location, start_dt=start_date, end_dt=end_date, type="metric", API_key=api_key)
+        
+        # Make a GET request to the API
+        response = requests.get(base_url)
+        # Raise an error if the response indicates a failure
         response.raise_for_status()
 
+        # Parse the response JSON
         data = response.json()
         return data
     except requests.exceptions.RequestException as e:
+        # Print error message if there was an issue with the request
         print(f"Error fetching data from VisualCrossing API: {e}")
         return None
+
+# Function to write weather data to CSV file
+def write_to_csv(file_name, data):
+    try:
+        with open(file_name, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            # Header row for the CSV file
+            writer.writerow(["Date", "Temperature (C)", "Conditions"])
+            # Iterate through the days in the response and write data to CSV
+            for day in data['days']:
+                writer.writerow([day['datetime'], day['temp'], day['conditions']])
+    except Exception as e:
+        # Print error message if there was an issue writing to the file
+        print(f"Error writing data to CSV file: {e}")
+
+# Function to test VisualCrossing API
+def test_visualcrossing_api():
+    location = "Newark,NJ"
+    # Define the start and end dates for fetching historical data (last 10 days)
+    end_date = datetime.datetime.now()
+    start_date = end_date - datetime.timedelta(days=10)
+    # Format dates as strings in the required format
+    end_date_str = end_date.strftime("%Y-%m-%d")
+    start_date_str = start_date.strftime("%Y-%m-%d")
+
+    # Fetch data from VisualCrossing API
+    data = fetch_visualcrossing_weather_data(location, start_date_str, end_date_str)
+    if data:
+        # Write data to CSV if fetch was successful
+        write_to_csv("visualcrossing_weather.csv", data)
+        print("VisualCrossing: Data successfully written to CSV.")
+    else:
+        print("VisualCrossing: Failed to fetch data.")
+
+# Function to fetch historical weather data from Open-Meteo API
+def fetch_openmeteo_weather_data(latitude, longitude, start_date, end_date):
+    try:
+        # Base URL for the Open-Meteo API from config file
+        base_url = config.OPEN_METEO_API_TMPL.format(lat=latitude, long=longitude, start_dt=start_date, end_date=end_date)
+        
+        # Make a GET request to the API
+        response = requests.get(base_url)
+        # Raise an error if the response indicates a failure
+        response.raise_for_status()
+
+        # Parse the response JSON
+        data = response.json()
+        return data
+    except requests.exceptions.RequestException as e:
+        # Print error message if there was an issue with the request
+        print(f"Error fetching data from Open-Meteo API: {e}")
+        return None
+
 
 # Function to write weather data to CSV file
 def write_to_csv(file_name, data):
@@ -104,8 +162,8 @@ def test_openmeteo_api():
 
 # Main function to execute all tests
 def main():
-    print("Testing VisualCrossing API...")
-    test_visualcrossing_api()
+    # print("Testing VisualCrossing API...")
+    # test_visualcrossing_api()
     print("\nTesting Open-Meteo API...")
     test_openmeteo_api()
 
