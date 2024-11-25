@@ -3,7 +3,6 @@ import numpy as np
 from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
 import argparse
-# python forecast_next_10_days.py --file data/output-20000101-20241123.csv --days 10
 
 
 def forecast_next_days(file_name="data/output-20000101-20241123.csv", days=10):
@@ -46,8 +45,14 @@ def forecast_next_days(file_name="data/output-20000101-20241123.csv", days=10):
     daily_data = data.iloc[:, :4]  # Focus on the daily data table
     daily_data.columns = ["Date", "T", "T_10_DAYS_AVG", "K_D_10_DAYS"]
     daily_data = daily_data.dropna(subset=["Date"])  # Ensure 'Date' column has valid data
-    last_date = daily_data["Date"].iloc[-1]
-    last_date_dt = datetime.strptime(str(int(last_date)), "%Y%m%d")
+
+    # Correctly parse the last date as YYYYMMDD
+    try:
+        last_date_str = str(int(daily_data["Date"].iloc[-1]))
+        last_date_dt = datetime.strptime(last_date_str, "%Y%m%d")
+    except ValueError:
+        print("Error: Last date in the 'Date' column is not in YYYYMMDD format!")
+        return None
 
     # Forecast the next 'days' days
     forecast_dates = [(last_date_dt + timedelta(days=i)).strftime("%Y%m%d") for i in range(1, days + 1)]
@@ -80,3 +85,5 @@ if __name__ == "__main__":
         print(forecast)
         forecast.to_csv("forecast_output.csv", index=False)
         print("\nForecast saved to 'forecast_output.csv'.")
+
+# python forecast_next_10_days.py --file data/output-20000101-20241123.csv --days 10
