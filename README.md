@@ -26,25 +26,34 @@ Slides:
 
 I will do a research on Global Warming topic looking at how temperature change in my home town.
 In this project I will be learning basics on how to conduct scientific project, how to write a a code to get and to analyze historical tempreature. 
-To do this I will use Python, Weather API (Application Programming Interface), GitHub with Codespaces, and Chat GPT for help. I will write the code in GitHub Codespaces using the Python extension and then running it to get all the information I need to complete this project. ToSince I can't get and analyze the weather data for the whole world, I will be using the weather data for New Jersey to complete my project in time.
+To do this I will use Python, Weather API (Application Programming Interface), GitHub with Codespaces, and Chat GPT for help. I will write the code in GitHub Codespaces using the Python extension and then running it to get all the information I need to complete this project. Since I can't get and analyze the weather data for the whole world, I will be using the weather data for New Jersey to complete my project in time.
 
 
 ## Slide 3 (cont): **Introduction/Background**
 
 1. **Software Development**:  
-   Software development are steps of creating code or software that run on computers or hardware to achieve cirtain goals. For our project, the Python code helps to understand climate change.
+   Software development are steps of creating code (software) that run on computers (hardware) to achieve certain goals. These steps are usually done by a team with help of development tools.
 
-2. **Python**:  
+2. **Teamwork**:  
+   Teamwork means working together to achieve a project goal. In our project, we’re working as a team, with me (Nikita), my dad and ChatGpt as a virtual assistant.
+
+3. **GitHub**:  
+   GitHub is an Internet tool to store and share programming code. It helps us work on the project together, and allows us to keep track of changes to the code.
+
+4. **Development Environment (on GitHub Codespace)**:  
+   A development environment is a place to write and test a code. On GitHub Codespaces, we can work in the cloud from Internet browser on any computer. It makes software development easier.
+
+5. **Python**:  
    Python is a programming language we use to write the code. It's easy to learn and is perfect for working with data in scientific projects like ours.
 
-3. **Teamwork**:  
-   Teamwork means working together to achieve a common goal. In our project, we’re working as a team, with me (Nikita), my dad and ChatGpt as a virtual assistant.
+6. **API (Application Programming Interface)**:  
+   API is a way to get data from data source to process it in a code. Like in this project, the Python code is getting weather history from Open-Meteo.com using JSON API over HTTPS.
 
-4. **GitHub**:  
-   GitHub is an Internet tool to store and share program's code. It helps us work on the project together, and allows us to keep track of changes to the code.
+7. **HTTPS (HyperText Transfer Protocol Secure)**:  
+   A secure version of HTTP, used to safely transfer data over the internet.
 
-5. **Development Environment (on GitHub Codespace)**:  
-   A development environment is a place to write and test a code. On GitHub Codespaces, we can work in the cloud from Internet browser on any computer. It makes software development easier.
+8. **JSON (JavaScript Object Notation)**:
+   A format for storing and exchanging data, often used for APIs to send and receive information.
 
 
 ## Slide 4 **Questions**
@@ -63,12 +72,16 @@ Global warming can be very dangerous because of this reason.
 
 ## Slide 6: **Hypothesis**
 
-I remember that the temperature in New Jersey seems to have gone up over time. I think I can write a computer program to show this and even predict what the weather might be like in the future! 
+I have heard that Global Warming is severe issue. Though I can't tell if the temperature in New Jersey have gone up or down during last years, I can write a program to see the local weather change and even predict what the weather might be like in the future! 
 
 ## Slide 7: **Variables**
 
-* Independent Variable: Year (changing over time from January 1, 2010, to November 20, 2024, to analyze trends).
-* Dependent Variable: Average temperature (observed and measured over time).
+* Independent Variable:  
+  - Date (changing over time from January 1, 2010, to November 20, 2024).  
+  - Year (to analyze average temperature change trends).  
+* Dependent Variable:  
+  - Daily temperature (collected frim data source).  
+  - Average temperature (calculated per year).  
 * Controlled Variables:  
   - Location: Jersey City, New Jersey.  
   - Data Type: Historical weather data (daily average temperatures).  
@@ -79,9 +92,27 @@ I remember that the temperature in New Jersey seems to have gone up over time. I
   - Calculation Method: Using the same formula for temperature trends and predictions.
 
 
-## Slide 8: **Materials**
+## Slide 8: **Materials/Tools**
+
+* GitHub with Codespaces.  
+* Python.  
+* Open-Meteo.com for past temperature in Jersey City.  
+* Google Keep. 
+* Chat GPT.
 
 ## Slide 9: **Procedures**
+
+* Lear basics about project tools and concepts.  
+* Setup project tools and development environment:  
+  - Create Google Account for Google Keep and to register on GitHub. 
+  - Create a GitHub repository.  
+  - Configure GitHub Workspace for Python.  
+  - Learn how to use Open-Meteo.com API.  
+  
+* Write the Python code on GitHub workspace.
+* Get temperature data, represent it for analyze and change if required.
+* Use Chat GPT for help to write and fix the code.
+
 
 ## Slide 10: **Data**
 
