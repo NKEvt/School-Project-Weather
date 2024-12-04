@@ -36,11 +36,19 @@ def prepare_features(data_monthly):
     datetime_index = df['Date']  # Save the datetime index
     df['Month'] = df['Date'].dt.month
     df['Year'] = df['Date'].dt.year
+    df['DayOfYear'] = df['Date'].dt.dayofyear  # Add day of year as a feature
     df['Lag1'] = df['T'].shift(1)
     df['Lag2'] = df['T'].shift(2)
-    df = df.dropna()  # Remove rows with NaN values (due to lagging)
 
-    features = df[['Month', 'Year', 'Lag1', 'Lag2']]
+    # Add rolling statistics features
+    df['RollingMean7'] = df['T'].rolling(window=7).mean().shift(1)  # 7-day rolling mean
+    df['RollingStd7'] = df['T'].rolling(window=7).std().shift(1)    # 7-day rolling std
+    df['RollingMean30'] = df['T'].rolling(window=30).mean().shift(1)  # 30-day rolling mean
+    df['RollingStd30'] = df['T'].rolling(window=30).std().shift(1)    # 30-day rolling std
+
+    df = df.dropna()  # Remove rows with NaN values (due to lagging and rolling)
+
+    features = df[['Month', 'Year', 'DayOfYear', 'Lag1', 'Lag2', 'RollingMean7', 'RollingStd7', 'RollingMean30', 'RollingStd30']]
     features.index = datetime_index[df.index]  # Reapply the datetime index
     target = df['T']
     return features, target
@@ -58,7 +66,12 @@ def train_model(features, target, model_file):
     try:
         print("Training a new Random Forest model...")
         X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
-        model = RandomForestRegressor(n_estimators=100, random_state=42)
+        # model = RandomForestRegressor(n_estimators=100, random_state=42)
+        model = RandomForestRegressor(
+            n_estimators=200,  # Increase the number of trees
+            max_depth=10,  # Limit tree depth to avoid overfitting
+            random_state=42
+        )
         model.fit(X_train, y_train)
 
         # Evaluate the model
@@ -81,33 +94,49 @@ def call_model(features, model, days, historical_data):
     """
     # Prepare forecast features
     last_row = features.iloc[-1].copy()  # Copy to avoid modifying original data
-    forecast_features = []
     predictions = []
 
     for i in range(days):
-        next_month = (last_row['Month'] + (i // 30)) % 12 or 12  # Cycle through months
-        next_year = last_row['Year'] + ((last_row['Month'] + (i // 30)) // 12)
-        
+        next_date = historical_data.index[-1] + pd.Timedelta(days=i + 1)  # Increment date
+        next_month = next_date.month
+        next_year = next_date.year
+        next_day_of_year = next_date.day_of_year  # Calculate day of the year
+
+        # Calculate rolling statistics dynamically
+        rolling_mean_7 = historical_data['T'].rolling(window=7).mean().iloc[-1]
+        rolling_std_7 = historical_data['T'].rolling(window=7).std().iloc[-1]
+        rolling_mean_30 = historical_data['T'].rolling(window=30).mean().iloc[-1]
+        rolling_std_30 = historical_data['T'].rolling(window=30).std().iloc[-1]
+
         # Create new feature row
         current_features = {
             'Month': next_month,
             'Year': next_year,
+            'DayOfYear': next_day_of_year,
             'Lag1': last_row['Lag1'],
-            'Lag2': last_row['Lag2']
+            'Lag2': last_row['Lag2'],
+            'RollingMean7': rolling_mean_7,
+            'RollingStd7': rolling_std_7,
+            'RollingMean30': rolling_mean_30,
+            'RollingStd30': rolling_std_30,
         }
-        
+
         # Predict temperature for the current day
         current_features_df = pd.DataFrame([current_features])  # Convert to DataFrame with feature names
         prediction = model.predict(current_features_df)[0]
+
+        # Add small random noise to the prediction
+        noise = np.random.normal(0, 0.5)  # Mean 0, small standard deviation
+        prediction += noise
+
         predictions.append(prediction)
-        
+
         # Update lags for the next iteration
         last_row['Lag2'] = last_row['Lag1']
         last_row['Lag1'] = prediction
 
     # Generate forecast dates starting from the last date in historical data
-    last_date = historical_data.index[-1]
-    forecast_dates = pd.date_range(last_date + pd.Timedelta(days=1), periods=days)
+    forecast_dates = pd.date_range(historical_data.index[-1] + pd.Timedelta(days=1), periods=days)
 
     # Adjust predictions based on historical data for the same month
     for i, date in enumerate(forecast_dates):
@@ -134,7 +163,6 @@ def call_model(features, model, days, historical_data):
     plt.show()
 
     return forecast_df
-
 
 ####################
 # main
