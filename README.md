@@ -110,7 +110,7 @@ I have heard that Global Warming is severe issue. Though I can't tell if the tem
   - Learn how to use Open-Meteo.com API.  
   
 * Write the Python code on GitHub workspace.
-* Get temperature data, represent it for analyze and change if required.
+* Get temperature data, display it for review and change the code if required.
 * Use Chat GPT for help to write and fix the code.
 
 
