@@ -202,7 +202,8 @@ def main():
     # calc_logic, start_date, end_date = "avg", "1984-01-01", "2023-12-31"
     # calc_logic, start_date, end_date = "max", "1964-01-01", "2023-12-31"
     # calc_logic, start_date, end_date = "avg", "1964-01-01", "2023-12-31"
-    calc_logic, start_date, end_date = "min", "1964-01-01", "2023-12-31"
+    # calc_logic, start_date, end_date = "min", "1964-01-01", "2023-12-31"
+    calc_logic, start_date, end_date = "avg", "2023-01-01", "2024-12-04"
     
     data_dir=f"data/{start_date.replace('-', '')}-{end_date.replace('-', '')}"
     # Ensure the `data` directory exists
