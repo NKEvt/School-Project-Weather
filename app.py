@@ -7,7 +7,7 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     # Ensure the forecast file exists
-    forecast_file = 'data/forecast_output.csv'
+    forecast_file = 'data/forecast_output.csv' 
     if not os.path.exists(forecast_file):
         return "Forecast data not found. Please run the forecast script first."
 

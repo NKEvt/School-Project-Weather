@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature and Change Plot</title>
+</head>
+<body>
+    <h1>Temperature and Change Over the Years</h1>
+    <img src="{{ url_for('serve_plot', filename='temperature_moving_avg_plot.png') }}" alt="Temperature and Change Plot" />
+</body>
+</html>
