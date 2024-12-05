@@ -2,7 +2,8 @@ import os
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_file
+import glob
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -11,80 +12,88 @@ app = Flask(__name__)
 if not os.path.exists('static'):
     os.makedirs('static')
 
-def generate_plot():
-    # URL of the CSV file
-    url = 'https://raw.githubusercontent.com/NKEvt/School-Project-Weather/refs/heads/development/data/19640101-20231231/yearly-max.csv'
-
-    # Download CSV from the URL
-    response = requests.get(url)
-    if response.status_code != 200:
-        print(f"Error fetching CSV: {response.status_code}")
-        return None  # Return None if the download fails
+# Helper function to generate plots from CSV data
+def generate_plot(folder_path):
+    # Get all CSV files in the folder that match the pattern "yearly-<calc_logic>.csv"
+    csv_files = glob.glob(os.path.join(folder_path, 'yearly-*.csv'))
+    if not csv_files:
+        return None  # No matching CSV files found
     
-    with open("yearly-max.csv", "wb") as file:
-        file.write(response.content)
+    plot_paths = []  # List to hold paths of generated plots
 
-    # Load the data into pandas DataFrame
-    try:
-        data = pd.read_csv("yearly-max.csv")
-    except Exception as e:
-        print(f"Error reading CSV: {e}")
-        return None  # Return None if there's an error loading the CSV
+    for csv_file in csv_files:
+        # Read CSV data into pandas DataFrame
+        try:
+            data = pd.read_csv(csv_file)
+        except Exception as e:
+            print(f"Error reading {csv_file}: {e}")
+            continue
+        
+        # Print columns for debugging
+        print(f"Processing {csv_file} with columns: {data.columns}")
 
-    # Extract the start and end years dynamically from the data
-    start_year = data['Year'].min()
-    end_year = data['Year'].max()
+        # Calculate the 5-year moving average of the temperature
+        data['5-Year Moving Avg'] = data['TEMPERATURE'].rolling(window=5).mean()
 
-    # Print start and end years for debugging
-    print(f"Start Year: {start_year}, End Year: {end_year}")
+        # Determine the dynamic range for the X-axis based on the years
+        min_year = data['Year'].min()
+        max_year = data['Year'].max()
 
-    # Calculate the 5-year moving average of the temperature
-    data['Moving_Avg'] = data['TEMPERATURE'].rolling(window=5).mean()
+        # Create the plot for the temperature and moving average
+        fig, ax1 = plt.subplots(figsize=(10, 6))
 
-    # Create a plot with a secondary y-axis for the Moving Average
-    fig, ax1 = plt.subplots(figsize=(10, 6))
+        # Plot Temperature
+        ax1.plot(data['Year'], data['TEMPERATURE'], label='Temperature', color='blue')
+        ax1.set_xlabel('Year')
+        ax1.set_ylabel('Temperature (°C)', color='blue')
+        ax1.set_ylim(data['TEMPERATURE'].min() * 0.9, data['TEMPERATURE'].max() * 1.1)  # Scale Y-axis by 10%
+        ax1.tick_params(axis='y', labelcolor='blue')
 
-    # Plot the TEMPERATURE data (Primary Y-axis)
-    ax1.plot(data['Year'], data['TEMPERATURE'], label='Temperature', color='blue')
-    ax1.set_xlabel('Year')
-    ax1.set_ylabel('Temperature (°C)', color='blue')
-    ax1.set_ylim(0, data['TEMPERATURE'].max() * 1.1)  # Scaling the Y-axis by 10%
-    ax1.tick_params(axis='y', labelcolor='blue')
-    
-    # Plot the Moving Average data (Secondary Y-axis)
-    ax2 = ax1.twinx()
-    ax2.plot(data['Year'], data['Moving_Avg'], label='5-Year Moving Avg', color='green')
-    ax2.set_ylabel('5-Year Moving Average', color='green')
-    ax2.set_ylim(0, data['Moving_Avg'].max() * 1.1)  # Scaling the Y-axis by 10%
-    ax2.tick_params(axis='y', labelcolor='green')
+        # Plot 5-Year Moving Average
+        ax2 = ax1.twinx()
+        ax2.plot(data['Year'], data['5-Year Moving Avg'], label='5-Year Moving Avg', color='red')
+        ax2.set_ylabel('5-Year Moving Average', color='red')
+        ax2.set_ylim(data['5-Year Moving Avg'].min() * 0.9, data['5-Year Moving Avg'].max() * 1.1)  # Scale Y-axis by 10%
+        ax2.tick_params(axis='y', labelcolor='red')
 
-    # Title and grid
-    plt.title(f'Yearly Temperature and 5-Year Moving Average ({start_year} - {end_year})')
-    ax1.grid(True)
+        # Set the title and grid
+        plt.title(f"Yearly Temperature and 5-Year Moving Average ({min_year} - {max_year})")
+        ax1.grid(True)
 
-    # Add legends
-    ax1.legend(loc='upper left')
-    ax2.legend(loc='upper right')
+        # Add legends
+        ax1.legend(loc='upper left')
+        ax2.legend(loc='upper right')
 
-    # Save the plot as an image in the static folder
-    plot_path = "static/temperature_moving_avg_plot.png"
-    plt.savefig(plot_path)
-    plt.close()
+        # Save the plot as an image
+        plot_path = f"static/{os.path.basename(csv_file).replace('.csv', '-plot.png')}"
+        plt.savefig(plot_path)
+        plt.close()
 
-    return plot_path
+        plot_paths.append(plot_path)  # Add the plot path to the list
 
+    return plot_paths  # Return a list of plot paths
 
-# Route for the main page to display the plot
+# Route to handle the main page and display plots
 @app.route('/')
 def index():
-    plot_path = generate_plot()
-    return render_template('index-moving-avg.html', plot_path=plot_path)
+    # Specify the folder path containing the CSV files (adjust as needed)
+    folder_path =  'data/19640101-20231231'
+    
+    plot_paths = generate_plot(folder_path)
+    
+    if not plot_paths:
+        return "No data found to generate plots.", 404
+    
+    # Render the index page and pass the plot paths for each file
+    return render_template('index-moving-avg.html', plot_paths=plot_paths)
 
-# Route to serve the plot image from the 'static' folder
-@app.route('/static/<path:filename>')
-def serve_plot(filename):
-    return send_from_directory('static', filename)
+# Route to send the plot image as a response
 
-# Run the app on port 8080
+@app.route('/static/<plot_filename>')
+def plot(plot_filename):
+    plot_path = f"static/{plot_filename}"
+    return send_file(plot_path, mimetype='image/png')
+
+# Run the Flask app on port 8080
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
