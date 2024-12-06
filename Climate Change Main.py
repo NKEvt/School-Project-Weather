@@ -217,7 +217,7 @@ def main(pLogic, pStart, pEnd):
 # pLogic, pStart, pEnd  = "avg", "1964-01-01", "2023-12-31"
 # pLogic, pStart, pEnd  = "min", "1964-01-01", "2023-12-31"
 # pLogic, pStart, pEnd  = "max", "2023-01-01", "2024-12-04"
-pLogic, pStart, pEnd  = "max", "2010-01-01", "2024-12-04"
+pLogic, pStart, pEnd  = "max", "2010-01-01", "2024-12-05"
 
 if __name__ == "__main__":
     main(pLogic, pStart, pEnd)
