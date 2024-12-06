@@ -1,47 +1,61 @@
 import os
+import joblib
 import pandas as pd
-import numpy as np
-from datetime import timedelta
 from pmdarima import auto_arima
-import matplotlib.pyplot as plt
-import joblib  # For saving and loading models
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 
+# Function to load and parse the CSV file
 def load_and_parse_csv(file_name):
     """
-    Loads and parses the CSV file for temperature data.
+    Loads and parses the CSV file for temperature data based on the format.
+    It handles two file formats: daily-avg.csv and openmeteo CSV.
     """
     try:
-        data = pd.read_csv(file_name, skiprows=8, skip_blank_lines=False)
+        # Load the data and inspect the columns
+        data = pd.read_csv(file_name, skip_blank_lines=False)
+        print(f"Loaded {file_name} with columns: {data.columns.tolist()}")
     except FileNotFoundError:
         print(f"Error: File '{file_name}' not found!")
         return None
 
-    daily_data_end_idx = data[data.iloc[:, 0].str.startswith("# Avg Yearly temperature", na=False)].index[0]
-    daily_data = data.iloc[:daily_data_end_idx, :4]
-    daily_data.columns = ["Date", "T", "T_10_DAYS_AVG", "K_D_10_DAYS"]
-    daily_data = daily_data.dropna(subset=["Date", "T"])
-    daily_data["T"] = pd.to_numeric(daily_data["T"], errors="coerce")
-    daily_data = daily_data.dropna(subset=["T"])
-    daily_data['Date'] = pd.to_datetime(daily_data['Date'], format='%Y-%m-%d')
-    daily_data.set_index('Date', inplace=True)
+    # Handle daily format
+    if "daily" in file_name:
+        data.columns = data.columns.str.strip().str.lower()
+        data["Date"] = pd.to_datetime(data["date"])
+        data = data.rename(columns={"temperature": "T"})
+        data["DayOfYear"] = data["Date"].dt.dayofyear
+        data = data[["Date", "T", "DayOfYear"]]
 
-    return daily_data
+    # Handle openmeteo CSV format
+    elif "openmeteo" in file_name:
+        data.columns = data.columns.str.strip().str.lower()
+        data["Date"] = pd.to_datetime(data["time"].str[:10])  # Extract date part
+        data["T"] = data["temperature"]
+        data["DayOfYear"] = data["Date"].dt.dayofyear
+        data = data[["Date", "T", "DayOfYear"]]
 
-def train_model(data_monthly, model_file):
+    else:
+        raise ValueError(f"Unknown file format for '{file_name}'.")
+
+    data = data.dropna(subset=["T"])  # Drop rows with missing temperature values
+    return data
+
+# Function to train or load a SARIMA model
+def train_model(data_daily, model_file):
     """
     Trains a SARIMA model or loads an existing one if available.
     """
-    # Check if the model already exists
     if os.path.exists(model_file):
         print(f"Loading pre-trained model from {model_file}...")
         return joblib.load(model_file)
 
     try:
         print("Training a new SARIMA model...")
+        # Use DayOfYear to reflect seasonality
         model = auto_arima(
-            data_monthly,
+            data_daily,
             seasonal=True,
-            m=12,
+            m=365,  # Reflect yearly seasonality
             stepwise=True,
             suppress_warnings=True,
             max_order=10,
@@ -56,63 +70,52 @@ def train_model(data_monthly, model_file):
         print(f"Error fitting SARIMA model: {e}")
         return None
 
-def call_model(data_monthly, days, model):
+# Function to forecast using the SARIMA model
+def sarima_forecast(model, start_date, days):
     """
-    Forecasts temperatures using a trained SARIMA model.
+    Uses the SARIMA model to forecast temperature for the specified days.
     """
-    forecast_months = max(1, (days // 30) + 1)
-    forecast = model.predict(n_periods=forecast_months)
-
-    last_date = data_monthly.index[-1]
-    forecast_dates = pd.date_range(last_date + pd.DateOffset(months=1), periods=forecast_months, freq='M')
-
-    daily_forecast_dates = pd.date_range(last_date + timedelta(days=1), periods=days, freq='D')
-    daily_forecast = pd.Series(
-        np.interp(
-            range(len(daily_forecast_dates)),
-            np.linspace(0, len(daily_forecast_dates) - 1, len(forecast_dates)),
-            forecast
-        ),
-        index=daily_forecast_dates
-    )
-
+    # Forecast for the specified number of days
+    forecast = model.predict(n_periods=days, return_conf_int=True)
     forecast_df = pd.DataFrame({
-        'Date': daily_forecast.index.strftime('%Y-%m-%d'),
-        'Predicted Temperature (°C)': daily_forecast.values
+        'Date': pd.date_range(start=start_date, periods=days),
+        'Mean': forecast[0].round(2),  # Round mean temperature to 2 decimal places
+        'Lower_CI': forecast[1][:, 0].round(2),  # Round lower confidence interval to 2 decimal places
+        'Upper_CI': forecast[1][:, 1].round(2)   # Round upper confidence interval to 2 decimal places
     })
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(data_monthly, label='Historical Data', color='blue')
-    plt.plot(forecast_dates, forecast, label='SARIMA Monthly Forecast', color='orange')
-    plt.plot(daily_forecast.index, daily_forecast.values, label='Interpolated Daily Forecast', color='green')
-    plt.legend()
-    plt.title('Temperature Forecast using SARIMA')
-    plt.xlabel('Date')
-    plt.ylabel('Temperature (°C)')
-    plt.show()
-
     return forecast_df
 
-def main(file_name="data/output-20000101-20241123.csv", days=10):
+
+# Main function to tie it all together
+def main(file_name, model_file, days=5):
     """
-    Main function to load data, train model, and forecast temperatures.
+    Main function to load data, train/load the model, and run forecasting.
     """
+    # Load and parse the data
     daily_data = load_and_parse_csv(file_name)
     if daily_data is None:
-        return None
-
-    data_monthly = daily_data['T'].resample('M').mean()
-
-    # Define model file name based on input file name
-    model_file = file_name.rsplit('.', 1)[0] + '.pkl'
-    model = train_model(data_monthly, model_file)
+        return  # Exit if loading failed
+    
+    daily_data.set_index("Date", inplace=True)  # Ensure Date is set as index
+    
+    # Train or load the SARIMA model
+    model = train_model(daily_data['T'], model_file)
     if model is None:
-        return None
-
-    forecast_df = call_model(data_monthly, days, model)
+        print("Model training/loading failed. Exiting.")
+        return
+    
+    # Get the last date in the dataset
+    max_date = daily_data.index.max()
+    start_date = max_date + pd.Timedelta(days=1)  # Start prediction from the next day
+    
+    # Perform SARIMA forecasting
+    forecast_df = sarima_forecast(model, start_date, days)
+    
     print(forecast_df)
     return forecast_df
 
-# Example usage
+# Run the main function
 if __name__ == "__main__":
-    forecast_df = main(days=30)
+    input_file = "data/20230101-20241204/daily-avg.csv"
+    model_file = input_file.rsplit('.', 1)[0] + '_sarima.pkl'  # Path to cache the trained model
+    forecast_df = main(input_file, model_file, days=5)

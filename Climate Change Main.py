@@ -6,14 +6,14 @@ import requests
 import config
 
 
-def fetch_openmeteo_weather_data(latitude, longitude, start_date, end_date, calc_logic='max', enforce_api_call=False):
+def fetch_openmeteo_weather_data(latitude, longitude, start_date, end_date, enforce_api_call=False):
     """
-    Fetch weather data from Open-Meteo API, caching the results in a file in the `data` folder.
-    The cached file contains `time` and `temperature`. Depending on `calc_logic`, return daily max, min, or avg temperature.
+    Fetch weather data from Open-Meteo API,
+    Caching the results in a file in the `data` folder.
+    The cached file contains `time` and `temperature`. 
+    Depending on global var `calc_logic`, return daily max, min, or avg temperature.
     """
-    # Ensure the `data` directory exists
-
-
+    
     # Define the cache file path
     cache_file = f"{data_dir}/openmeteo-{start_date.replace('-', '')}-{end_date.replace('-', '')}.csv"
 
@@ -75,12 +75,10 @@ def fetch_openmeteo_weather_data(latitude, longitude, start_date, end_date, calc
         if temperatures:  # Ensure there's at least one valid temperature
             if calc_logic == 'avg':
                 result_temp = round(sum(temperatures) / len(temperatures),2)
-                
             elif calc_logic == 'min':
                 result_temp = min(temperatures)
             else:  # Default to 'max'
                 result_temp = max(temperatures)
-
             formatted_data.append({"date": date, "temperature": result_temp})
 
     return formatted_data
@@ -170,7 +168,6 @@ def write_daily_data_to_csv(daily_data):
 
     print(f"Daily data saved to {output_file}")
 
-
 def write_yearly_averages_to_csv(yearly_averages):
     """
     Write yearly averages data to CSV.
@@ -187,50 +184,39 @@ def write_yearly_averages_to_csv(yearly_averages):
     
     print(f"Yearly averages saved to {output_file}")
 
-
-def main():
-    # Define constants
-    latitude = 40.7282 # latitude of Jersey City 
-    longitude = -74.0776 # longitude of Jersey City 
+def main(pLogic, pStart, pEnd):
     global data_dir, calc_logic
+    calc_logic, start_date, end_date = pLogic, pStart, pEnd
 
-    # calc_logic, start_date, end_date = "avg", "1994-01-01", "2023-12-31"
-    # calc_logic, start_date, end_date = "avg", "2021-01-01", "2023-12-31"
-    # calc_logic, start_date, end_date = "avg", "1984-01-01", "2023-12-31"
-    
-    # calc_logic, start_date, end_date = "max", "1984-01-01", "2023-12-31"
-    # calc_logic, start_date, end_date = "avg", "1984-01-01", "2023-12-31"
-    # calc_logic, start_date, end_date = "max", "1964-01-01", "2023-12-31"
-    # calc_logic, start_date, end_date = "avg", "1964-01-01", "2023-12-31"
-    # calc_logic, start_date, end_date = "min", "1964-01-01", "2023-12-31"
-    calc_logic, start_date, end_date = "avg", "2023-01-01", "2024-12-04"
+    # Define constants
+    latitude,longitude  = 40.7282,-74.0776   # latitude and longitude  of Jersey City 
     
     data_dir=f"data/{start_date.replace('-', '')}-{end_date.replace('-', '')}"
     # Ensure the `data` directory exists
     os.makedirs(data_dir, exist_ok=True)
     
-    # Step 1: Fetch data
     print("Fetching weather data...")
-    data = fetch_openmeteo_weather_data( latitude, longitude, start_date, end_date, calc_logic )
+    data = fetch_openmeteo_weather_data( latitude, longitude, start_date, end_date)
     if not data or not isinstance(data, list) or len(data) == 0:
         print("Error: No valid temperature data found!")
         return
 
-    # Step 2: Process daily temperature data
     print("Calculating daily averages ...")
     daily_avg  = calculate_daily_averages(data)
 
-    # Step 3: Calculate yearly averages and coefficients
     print("Calculating yearly averages and coefficients...")
     yearly_averages  = calculate_yearly_averages(daily_avg)
 
-
-    # Step 4: Write results to CSV
     print("Saving data into CSV...")
     write_daily_data_to_csv(daily_avg)
     write_yearly_averages_to_csv(yearly_averages)
 
     print("Processing complete! Results saved to CSV.")
 
+# pLogic, pStart, pEnd = "max", "1964-01-01", "2023-12-31"
+# pLogic, pStart, pEnd  = "avg", "1964-01-01", "2023-12-31"
+# pLogic, pStart, pEnd  = "min", "1964-01-01", "2023-12-31"
+pLogic, pStart, pEnd  = "max", "2023-01-01", "2024-12-04"
+
 if __name__ == "__main__":
-    main()
+    main(pLogic, pStart, pEnd)

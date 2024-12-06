@@ -21,8 +21,8 @@ def load_and_parse_csv(file_name):
         print(f"Error: File '{file_name}' not found!")
         return None
 
-    # Handle daily-avg.csv format
-    if "daily-avg.csv" in file_name:
+    # Handle daily format
+    if "daily" in file_name:
         data.columns = data.columns.str.strip().str.lower()
         data["Date"] = pd.to_datetime(data["date"])
         data = data.rename(columns={"temperature": "T"})
@@ -69,7 +69,6 @@ def prepare_features(data):
 
     return data, X, y
 
-
 def train_model(X, y):
     """
     Train the Random Forest model using the provided features (X) and target (y).
@@ -105,10 +104,8 @@ def plot_predictions(data, model):
     plt.legend()
     plt.show()
 
-def main():
+def main(file_names):
     # Load data from CSV files
-    # file_names = [ "data/20230101-20241204/daily-avg.csv", "data/20230101-20241204/openmeteo-20230101-20241204.csv" ]
-    file_names = [ "data/20230101-20241204/openmeteo-20230101-20241204.csv" ]
     
     # Load and combine data
     data_frames = [load_and_parse_csv(file) for file in file_names]
@@ -141,5 +138,8 @@ def main():
     for date, prediction in zip(next_dates, predictions):
         print(f"{date.strftime('%Y-%m-%d')}: {prediction:.2f}°C")
 
+# file_names = [ "data/20230101-20241204/daily-avg.csv", "data/20230101-20241204/openmeteo-20230101-20241204.csv" ]
+file_names = [ "data/20230101-20241204/openmeteo-20230101-20241204.csv" ]
+
 if __name__ == "__main__":
-    main()
+    main(file_names)
