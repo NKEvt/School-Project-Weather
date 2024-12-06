@@ -36,8 +36,8 @@ def generate_plot(folder_path):
         data['5-Year Moving Avg'] = data['TEMPERATURE'].rolling(window=5).mean()
 
         # Determine the dynamic range for the X-axis based on the years
-        min_year = data['Year'].min()
-        max_year = data['Year'].max()
+        min_year = data['Year'].min()-1
+        max_year = data['Year'].max()+1
 
         # Create the plot for the temperature and moving average
         fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -46,14 +46,14 @@ def generate_plot(folder_path):
         ax1.plot(data['Year'], data['TEMPERATURE'], label='Temperature', color='blue')
         ax1.set_xlabel('Year')
         ax1.set_ylabel('Temperature (°C)', color='blue')
-        ax1.set_ylim(data['TEMPERATURE'].min() * 0.9, data['TEMPERATURE'].max() * 1.1)  # Scale Y-axis by 10%
+        ax1.set_ylim(data['TEMPERATURE'].min() * 0.93, data['TEMPERATURE'].max() * 1.08)  # Scale Y-axis by 10%
         ax1.tick_params(axis='y', labelcolor='blue')
 
         # Plot 5-Year Moving Average
         ax2 = ax1.twinx()
         ax2.plot(data['Year'], data['5-Year Moving Avg'], label='5-Year Moving Avg', color='red')
         ax2.set_ylabel('5-Year Moving Average', color='red')
-        ax2.set_ylim(data['5-Year Moving Avg'].min() * 0.9, data['5-Year Moving Avg'].max() * 1.1)  # Scale Y-axis by 10%
+        ax2.set_ylim(data['5-Year Moving Avg'].min() * 0.93, data['5-Year Moving Avg'].max() * 1.08)  # Scale Y-axis by 10%
         ax2.tick_params(axis='y', labelcolor='red')
 
         # Set the title and grid

@@ -13,3 +13,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Ignore cached training model
+# *.pkl
+data/output-20000101-20241123_rf.pkl
+data/output-20000101-20241123.pkl
+data/output-20000101-20241123_rf_saved.pkl

@@ -77,7 +77,9 @@ I have heard that Global Warming is severe issue. Though I can't tell if the tem
 ## Slide 7: **Variables**
 
 * Independent Variable:  
-  - Date (changing over time from January 1, 2010, to November 20, 2024).  
+  - Date range for temperature increase (from January 1, 1964, to December 31, 2023).  
+  - Date range for temperature prediction (from January 1, 2023, to December 4, 2024).  
+  - Date (changing over time from January 1, 1964, to December 31, 2023).  
   - Year (to analyze average temperature change trends).  
 * Dependent Variable:  
   - Daily temperature (collected frim data source).  
@@ -85,7 +87,6 @@ I have heard that Global Warming is severe issue. Though I can't tell if the tem
 * Controlled Variables:  
   - Location: Jersey City, New Jersey.  
   - Data Type: Historical weather data (daily average temperatures).  
-  - Time Range: January 1, 2010, to November 20, 2024.  
 * Constant Variables:  
   - Measurement Units: Fahrenheit.  
   - Data Source: Open-Meteo.com.  
@@ -99,6 +100,7 @@ I have heard that Global Warming is severe issue. Though I can't tell if the tem
 * Open-Meteo.com for past temperature in Jersey City.  
 * Google Keep. 
 * Chat GPT.
+
 
 ## Slide 9: **Procedures**
 
@@ -116,8 +118,46 @@ I have heard that Global Warming is severe issue. Though I can't tell if the tem
 
 ## Slide 10: **Data**
 
+* ![Yearly Average Plot](https://raw.githubusercontent.com/NKEvt/School-Project-Weather/99241539ddc2ac8299e472705892b38232dd5877/static/yearly-avg-plot.png)
+
+
+<pre>
+@equityit ➜ /workspaces/School-Project-Weather (development) $ /usr/local/bin/python /workspaces/School-Project-Weather/forecast-random-forest.py
+Loaded data/20230101-20241204/openmeteo-20230101-20241204.csv with columns: ['time', 'temperature']
+Model Mean Squared Error: 0.012590059657237803
+Preparing next 10 days of predictions...
+Next 10 Days Predictions:
+2024-12-05: 2.59°C
+2024-12-06: 3.88°C
+2024-12-07: 4.60°C
+2024-12-08: 5.02°C
+2024-12-09: 5.20°C
+2024-12-10: 5.01°C
+2024-12-11: 4.24°C
+2024-12-12: 3.19°C
+2024-12-13: 2.30°C
+2024-12-14: 1.40°C
+</pre>
+
+
 ## Slide 11: **Analysis**
 
+I asked my program to calculate the temperature difference between the years 1963 and 2023.  
+The results showed that the temperature in New Jersey increases by 0.33 Celsius degrees every 10 years over this 60-years period. This rise shows a significant change in the temperature in New Jersey which can be caused by different things.  
+I asked my program to predict the temprature for the next days using random forest training model and results of this prediction are on previous slide, these  temperature is to the real temperature.
+
+
 ## Slide 12: **Conclusion**
+
+Through this project, I learned a lot about the effects of global warming and how temperatures are changing over time in Jersey City. By using Python, Open-Meteo API, GitHub, and Chat GPT as tools, I was able to:
+Collect and analyze historical weather data.
+Identify that the temperature in Jersey City has increased by 0.33°C every 10 years.
+Predict future temperatures using machine learning (Random Forest model).
+This confirms that global warming is an actual issue and may have a significant impact on our community. It is important to continue studying this problem.
+
+Next Steps:
+* Further Research: Investigate other regions to compare trends.  
+* Self Improvements: Learn how to use computers for other projects.  
+* Public Awareness: Share the results to show how to use existing free software tools for school projects and raise awareness about climate change.  
 
 ## Slide 13: **Thank You**
