@@ -2,12 +2,12 @@ import os
 import joblib
 import pandas as pd
 from pmdarima import auto_arima
-from statsmodels.tsa.statespace.sarimax import SARIMAX
+import logging
 
 # Function to load and parse the CSV file
 def load_and_parse_csv(file_name):
     """
-    Loads and parses the CSV file for temperature data based on the format.
+    Loads, parses, and preprocesses the CSV file for temperature data.
     It handles two file formats: daily-avg.csv and openmeteo CSV.
     """
     try:
@@ -37,7 +37,16 @@ def load_and_parse_csv(file_name):
     else:
         raise ValueError(f"Unknown file format for '{file_name}'.")
 
-    data = data.dropna(subset=["T"])  # Drop rows with missing temperature values
+    # Drop rows with missing temperature values
+    data = data.dropna(subset=["T"])
+
+    # Set the Date column as index and enforce frequency
+    data.set_index("Date", inplace=True)  # Ensure Date is set as index
+    data = data.asfreq('D')  # Explicitly set daily frequency
+
+    # Fill minor gaps with interpolation if necessary
+    data['T'] = data['T'].interpolate(method='time')
+
     return data
 
 # Function to train or load a SARIMA model
@@ -51,14 +60,21 @@ def train_model(data_daily, model_file):
 
     try:
         print("Training a new SARIMA model...")
+
+        # enable logging
+        logging.basicConfig(level=logging.DEBUG)
+
         # Use DayOfYear to reflect seasonality
         model = auto_arima(
             data_daily,
             seasonal=True,
-            m=365,  # Reflect yearly seasonality
+            m=365,  # Yearly seasonality
             stepwise=True,
             suppress_warnings=True,
-            max_order=10,
+            max_order=5,
+            d=1,  # Difference order
+            D=1,  # Seasonal difference order
+            maxiter=50,  # Limit iterations
             error_action='ignore',
             trace=True
         )
@@ -85,7 +101,6 @@ def sarima_forecast(model, start_date, days):
     })
     return forecast_df
 
-
 # Main function to tie it all together
 def main(file_name, model_file, days=5):
     """
@@ -95,8 +110,6 @@ def main(file_name, model_file, days=5):
     daily_data = load_and_parse_csv(file_name)
     if daily_data is None:
         return  # Exit if loading failed
-    
-    daily_data.set_index("Date", inplace=True)  # Ensure Date is set as index
     
     # Train or load the SARIMA model
     model = train_model(daily_data['T'], model_file)
@@ -116,6 +129,6 @@ def main(file_name, model_file, days=5):
 
 # Run the main function
 if __name__ == "__main__":
-    input_file = "data/20230101-20241204/daily-avg.csv"
+    input_file = "data/20100101-20241204/daily-max.csv"
     model_file = input_file.rsplit('.', 1)[0] + '_sarima.pkl'  # Path to cache the trained model
     forecast_df = main(input_file, model_file, days=5)
